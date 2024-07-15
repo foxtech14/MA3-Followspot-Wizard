@@ -32,6 +32,35 @@ local colorYellow = Root().ColorTheme.ColorGroups.SystemMonitor.Yellow
 local colorDarkBlue = Root().ColorTheme.ColorGroups.Checkbox.SelectedBackground
 
 -- ****************************************************************
+-- grandma variables
+-- ****************************************************************
+
+local maGlobal = {
+    {"bbSpot1", 0},
+    {"bbSpot2", 0},
+    {"bbSpot3", 0},
+    {"bbSpot4", 0},
+    {"bbSpot5", 0},
+    {"bbSpot6", 0},
+    {"bbSpot1Seq", 0},
+    {"bbSpot2Seq", 0},
+    {"bbSpot3Seq", 0},
+    {"bbSpot4Seq", 0},
+    {"bbSpot5Seq", 0},
+    {"bbSpot6Seq", 0},
+    {"bbCharacterStart", 2.1},
+    {"bbCharacterEnd", 2.2},
+    {"bbColourStart", 4.1},
+    {"bbColourEnd", 4.2},
+    {"bbSizeStart", 23.1},
+    {"bbSizeEnd", 23.2},
+    {"bbCharacterPool", 2},
+    {"bbColourPool", 4},
+    {"bbSizePool", 23},
+    {"bbSpotsInstalled", "true"}
+}
+
+-- ****************************************************************
 -- helper functions
 -- ****************************************************************
 
@@ -76,6 +105,17 @@ local function notInstalledWarning()
     })
 end
 
+local function areYouSure(option)
+    local message = MB({
+        title = "Confirm",
+        message = "Are you sure you want to ".. option,
+        commands = {{value = 1, name = "Yes"},{value = 0, name = "No"}},
+        icon = "logo_small",
+    })
+
+    return message.result
+end
+
 -- ****************************************************************
 -- worker functions
 -- ****************************************************************
@@ -104,72 +144,54 @@ local function storeOff(spot, cue)
     C("Blind Off")
 end
 
+local function storeConfig(data)
+    for k, v in pairs(data) do
+        SetVar(GV,k,v)
+    end
+end
+
 -- ****************************************************************
 -- secondary functions
 -- ****************************************************************
 
 local function info()
-    E("info here")
-end
+    local message = "Info Here"
 
-local function config()
-    E("config")
+    MB({
+        title = "Info",
+        message = message,
+        commands = {{value = 1, name = "Ok"}},
+        icon = "logo_small",
+    })
 end
 
 local function install()
-    E("installing")
 
-    SetVar(GV, "bbSpot1", 0)
-    SetVar(GV, "bbSpot2", 0)
-    SetVar(GV, "bbSpot3", 0)
-    SetVar(GV, "bbSpot4", 0)
-    SetVar(GV, "bbSpot5", 0)
-    SetVar(GV, "bbSpot6", 0)
-    SetVar(GV, "bbSpot1Seq", 0)
-    SetVar(GV, "bbSpot2Seq", 0)
-    SetVar(GV, "bbSpot3Seq", 0)
-    SetVar(GV, "bbSpot4Seq", 0)
-    SetVar(GV, "bbSpot5Seq", 0)
-    SetVar(GV, "bbSpot6Seq", 0)
-    SetVar(GV, "bbCharacterStart", 2.1)
-    SetVar(GV, "bbCharacterEnd", 2.2)
-    SetVar(GV, "bbColourStart", 4.1)
-    SetVar(GV, "bbColourEnd", 4.2)
-    SetVar(GV, "bbSizeStart", 23.1)
-    SetVar(GV, "bbSizeEnd", 23.2)
-    SetVar(GV, "bbCharacterPool", 2)
-    SetVar(GV, "bbColourPool", 4)
-    SetVar(GV, "bbSizePool", 23)
+    E("Installing")
 
-    SetVar(GV, "bbSpotsInstalled", "true")
+	local progHandle = StartProgress("Installing") -- create the progress bar
+	SetProgressRange(progHandle, 1, table.getn(maGlobal)) -- define the range of the progress bar
+
+    for i, v in ipairs(maGlobal) do
+        SetVar(GV, v[1], v[2])
+        SetProgress(progHandle, i)
+    end
+
+    StopProgress(progHandle) -- remove the progress bar
 end
 
 local function uninstall()
-    E("uninstalling")
 
-    DelVar(GV, "bbSpot1")
-    DelVar(GV, "bbSpot2")
-    DelVar(GV, "bbSpot3")
-    DelVar(GV, "bbSpot4")
-    DelVar(GV, "bbSpot5")
-    DelVar(GV, "bbSpot6")
-    DelVar(GV, "bbSpot1Seq")
-    DelVar(GV, "bbSpot2Seq")
-    DelVar(GV, "bbSpot3Seq")
-    DelVar(GV, "bbSpot4Seq")
-    DelVar(GV, "bbSpot5Seq")
-    DelVar(GV, "bbSpot6Seq")
-    DelVar(GV, "bbCharacterStart")
-    DelVar(GV, "bbCharacterEnd")
-    DelVar(GV, "bbColourStart")
-    DelVar(GV, "bbColourEnd")
-    DelVar(GV, "bbSizeStart")
-    DelVar(GV, "bbSizeEnd")
-    DelVar(GV, "bbCharacterPool")
-    DelVar(GV, "bbColourPool")
-    DelVar(GV, "bbSizePool")
+    E("Uninstalling...")
+    local progHandle = StartProgress("Uninstalling") -- create the progress bar
+	SetProgressRange(progHandle, 1, table.getn(maGlobal)) -- define the range of the progress bar
 
-    DelVar(GV, "bbSpotsInstalled")
+    for i, v in ipairs(maGlobal) do
+        DelVar(GV, v[1])
+        SetProgress(progHandle, i)
+    end
+
+    StopProgress(progHandle) -- remove the progress bar
 end
 
 -- ****************************************************************
@@ -320,15 +342,20 @@ functions['install'] = function()
     end
 
     signals.installClicked = function(caller)
-        E("Install Started...")
-        install()
-        E("Install Complete...")
+        if areYouSure("Install the plugins Variables and Custom Macros") then
+            E("Install Started")
+            install()
+            E("Install Complete")
+        end
+        
     end
 
     signals.uninstallClicked = function(caller)
-        E("Uninstall Started...")
-        uninstall()
-        E("Uninstall Complete...")
+        if areYouSure("Uninstall the plugins Variables and Custom Macros") then
+            E("Uninstall Started")
+            uninstall()
+            E("Uninstall Complete")
+        end
     end
 
 end
@@ -667,12 +694,12 @@ functions['config'] = function()
 
     displayConfig()
 
-    charStartText.Content = tonumber(GetVar(GV, "bbCharactersStart"))
-    charEndText.Content = tonumber(GetVar(GV, "bbCharactersEnd"))
-    colourStartText.Content = tonumber(GetVar(GV, "bbColoursStart"))
-    colourEndText.Content = tonumber(GetVar(GV, "bbColoursEnd"))
-    sizeStartText.Content = tonumber(GetVar(GV, "bbSizesStart"))
-    sizeEndText.Content = tonumber(GetVar(GV, "bbSizesEnd"))
+    charStartText.Content = tonumber(GetVar(GV, "bbCharacterStart"))
+    charEndText.Content = tonumber(GetVar(GV, "bbCharacterEnd"))
+    colourStartText.Content = tonumber(GetVar(GV, "bbColourStart"))
+    colourEndText.Content = tonumber(GetVar(GV, "bbColourEnd"))
+    sizeStartText.Content = tonumber(GetVar(GV, "bbSizeStart"))
+    sizeEndText.Content = tonumber(GetVar(GV, "bbSizeEnd"))
 
     applyButton.Clicked = "ApplyButtonClicked"
     cancelButton.Clicked = "CancelButtonClicked"
@@ -716,10 +743,10 @@ end
 functions['wizard'] = function()
 
     -- check to see if the plugin has been installed or not
-    -- if (isempty(GetVar(GV, "bbSpotsInstalled"))) then
-    --     notInstalledWarning()
-    --     return
-    -- end
+    if (isempty(GetVar(GV, "bbSpotsInstalled"))) then
+        notInstalledWarning()
+        return
+    end
 
 
     -- 'import' showfile variables into plugin
